@@ -17,6 +17,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,8 +37,8 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
 
-        HttpClient httpclient = new DefaultHttpClient();
-        HttpPost httppost = new HttpPost("https://api.nutritionix.com/v1_1/search");
+        final HttpClient httpclient = new DefaultHttpClient();
+        final HttpPost httppost = new HttpPost("https://api.nutritionix.com/v1_1/search");
 
         try {
             // Add your data
@@ -48,12 +49,18 @@ public class MainActivity extends ActionBarActivity {
             httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
             // Execute HTTP Post Request
-            HttpResponse response = httpclient.execute(httppost);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        HttpResponse response = httpclient.execute(httppost);
+                        String string = EntityUtils.toString(response.getEntity());
+                        Log.i("Fired: ",string);
+                    }catch (IOException e){}
 
-            Log.i("Response: ",response.toString());
+                }
+            }).start();
 
-        } catch (ClientProtocolException e) {
-            // TODO Auto-generated catch block
         } catch (IOException e) {
             // TODO Auto-generated catch block
         }
@@ -84,32 +91,4 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class LongOperation extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String... params) {
-            for (int i = 0; i < 5; i++) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.interrupted();
-                }
-            }
-            return "Executed";
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            TextView txt = (TextView) findViewById(R.id.output);
-            txt.setText("Executed"); // txt.setText(result);
-            // might want to change "executed" for the returned string passed
-            // into onPostExecute() but that is upto you
-        }
-
-        @Override
-        protected void onPreExecute() {}
-
-        @Override
-        protected void onProgressUpdate(Void... values) {}
-    }
 }
